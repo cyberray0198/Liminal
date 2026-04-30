@@ -414,10 +414,28 @@
             { id: 13, name: 'Phase 13 — Marketing & Launch Prep', start: '2026-06-12', end: '2026-06-24', owner: 'chase', week: 6 },
         ];
 
-        const states = {};
-        phases.forEach(p => states[p.id] = 'todo');
-
+        let states = {};
         let currentFilter = 'all';
+
+        // Load states from localStorage
+        function loadStates() {
+            const saved = localStorage.getItem('liminal_tracker_states');
+            if (saved) {
+                try {
+                    states = JSON.parse(saved);
+                } catch (e) {
+                    states = {};
+                    phases.forEach(p => states[p.id] = 'todo');
+                }
+            } else {
+                phases.forEach(p => states[p.id] = 'todo');
+            }
+        }
+
+        // Save states to localStorage
+        function saveStates() {
+            localStorage.setItem('liminal_tracker_states', JSON.stringify(states));
+        }
 
         function fmt(d) {
             const dt = new Date(d);
@@ -462,6 +480,7 @@
             if (states[id] === 'todo') states[id] = 'wip';
             else if (states[id] === 'wip') states[id] = 'done';
             else states[id] = 'todo';
+            saveStates();
             render();
         }
 
@@ -533,6 +552,8 @@
             });
         }
 
+        // Initialize on page load
+        loadStates();
         render();
     </script>
 </body>
