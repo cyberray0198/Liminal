@@ -1,0 +1,223 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.tracker{padding:1.5rem 0}
+.header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:8px}
+.title{font-size:18px;font-weight:500;color:var(--color-text-primary)}
+.launch{font-size:13px;color:var(--color-text-secondary)}
+.prog-wrap{margin-bottom:1.5rem}
+.prog-label{display:flex;justify-content:space-between;font-size:12px;color:var(--color-text-secondary);margin-bottom:6px}
+.prog-bar{height:6px;background:var(--color-background-secondary);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;background:#534AB7;border-radius:99px;transition:width .4s ease}
+.legend{display:flex;gap:16px;margin-bottom:1.5rem;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--color-text-secondary)}
+.leg-dot{width:8px;height:8px;border-radius:50%}
+.phases{display:flex;flex-direction:column;gap:6px}
+.phase{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px 14px;cursor:pointer;transition:background .15s,border-color .15s;user-select:none}
+.phase:hover{background:var(--color-background-secondary);border-color:var(--color-border-secondary)}
+.phase.done{border-color:var(--color-border-success);background:var(--color-background-success)}
+.phase.wip{border-color:var(--color-border-warning);background:var(--color-background-warning)}
+.phase-row{display:flex;align-items:center;gap:10px}
+.status-btn{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--color-border-secondary);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all .15s}
+.phase.done .status-btn{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.phase.wip .status-btn{background:#BA7517;border-color:#BA7517;color:#fff}
+.phase-info{flex:1;min-width:0}
+.phase-name{font-size:14px;font-weight:500;color:var(--color-text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phase.done .phase-name{text-decoration:line-through;color:var(--color-text-secondary)}
+.phase-meta{display:flex;align-items:center;gap:8px;margin-top:2px;flex-wrap:wrap}
+.date-tag{font-size:11px;color:var(--color-text-secondary)}
+.owner-tag{font-size:10px;padding:2px 7px;border-radius:99px;font-weight:500}
+.ray{background:#EEEDFE;color:#3C3489}
+.chase{background:#FAEEDA;color:#633806}
+.both{background:#E1F5EE;color:#085041}
+.days-tag{font-size:11px;font-weight:500}
+.days-tag.soon{color:#BA7517}
+.days-tag.past{color:#A32D2D}
+.days-tag.ok{color:var(--color-text-secondary)}
+.phase-bar{height:3px;background:var(--color-background-secondary);border-radius:99px;margin-top:8px;overflow:hidden}
+.phase-bar-fill{height:100%;border-radius:99px;transition:width .3s}
+.week-strip{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:1.5rem}
+.week-box{background:var(--color-background-secondary);border-radius:4px;padding:6px 4px;text-align:center;font-size:11px;color:var(--color-text-secondary);border:0.5px solid var(--color-border-tertiary)}
+.week-box.active{border-color:#534AB7;color:#534AB7;font-weight:500;background:#EEEDFE}
+.toggle-row{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+.tog-btn{font-size:12px;padding:5px 12px;border-radius:99px;border:0.5px solid var(--color-border-secondary);background:transparent;cursor:pointer;color:var(--color-text-secondary);transition:all .15s}
+.tog-btn.active{background:#534AB7;border-color:#534AB7;color:#fff}
+.countdown{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.5rem}
+.count-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 12px;text-align:center}
+.count-num{font-size:22px;font-weight:500;color:var(--color-text-primary)}
+.count-lbl{font-size:11px;color:var(--color-text-secondary);margin-top:2px}
+</style>
+
+<div class="tracker">
+  <div class="header">
+    <span class="title">Liminal — 8 Week Dev Tracker</span>
+    <span class="launch" id="launch-label"></span>
+  </div>
+
+  <div class="countdown">
+    <div class="count-card"><div class="count-num" id="days-left">—</div><div class="count-lbl">days to launch</div></div>
+    <div class="count-card"><div class="count-num" id="weeks-left">—</div><div class="count-lbl">weeks remaining</div></div>
+    <div class="count-card"><div class="count-num" id="pct-done">0%</div><div class="count-lbl">phases complete</div></div>
+  </div>
+
+  <div class="week-strip" id="week-strip"></div>
+
+  <div class="prog-wrap">
+    <div class="prog-label"><span>Overall progress</span><span id="prog-text">0 / 14 phases</span></div>
+    <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:#534AB7"></div>Ray</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#BA7517"></div>Chase</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#1D9E75"></div>Both</div>
+  </div>
+
+  <div class="toggle-row">
+    <button class="tog-btn active" onclick="filter('all',this)">All phases</button>
+    <button class="tog-btn" onclick="filter('ray',this)">Ray only</button>
+    <button class="tog-btn" onclick="filter('chase',this)">Chase only</button>
+    <button class="tog-btn" onclick="filter('both',this)">Collaborative</button>
+  </div>
+
+  <div class="phases" id="phases"></div>
+</div>
+
+<script>
+const START = new Date('2026-05-01');
+const LAUNCH = new Date('2026-06-25');
+const TODAY = new Date('2026-04-30');
+
+const phases = [
+  {id:0, name:'Phase 0 — Dev Environment Setup', start:'2026-05-01', end:'2026-05-03', owner:'both', week:1},
+  {id:1, name:'Phase 1 — Lobby Creation', start:'2026-05-04', end:'2026-05-11', owner:'both', week:1},
+  {id:2, name:'Phase 2 — Core Game Systems', start:'2026-05-12', end:'2026-05-18', owner:'ray', week:2},
+  {id:3, name:'Phase 3 — Map 1: Old Bunker', start:'2026-05-19', end:'2026-05-29', owner:'both', week:3},
+  {id:4, name:'Phase 4 — Map 2: Dark Forest', start:'2026-05-30', end:'2026-06-05', owner:'both', week:5},
+  {id:5, name:'Phase 5 — Map 3: Abandoned Prison', start:'2026-06-06', end:'2026-06-12', owner:'both', week:6},
+  {id:6, name:'Phase 6 — Monster Mechanics', start:'2026-06-06', end:'2026-06-13', owner:'ray', week:6},
+  {id:7, name:'Phase 7 — Character Modelling', start:'2026-05-19', end:'2026-06-05', owner:'ray', week:3},
+  {id:8, name:'Phase 8 — Animations', start:'2026-06-01', end:'2026-06-12', owner:'ray', week:5},
+  {id:9, name:'Phase 9 — VFX & Atmosphere', start:'2026-06-13', end:'2026-06-17', owner:'ray', week:7},
+  {id:10, name:'Phase 10 — UI / UX', start:'2026-06-13', end:'2026-06-17', owner:'ray', week:7},
+  {id:11, name:'Phase 11 — Audio', start:'2026-06-13', end:'2026-06-17', owner:'both', week:7},
+  {id:12, name:'Phase 12 — Playtesting & Bugs', start:'2026-06-18', end:'2026-06-22', owner:'both', week:7},
+  {id:13, name:'Phase 13 — Marketing & Launch Prep', start:'2026-06-12', end:'2026-06-24', owner:'chase', week:6},
+];
+
+const states = {};
+phases.forEach(p => states[p.id] = 'todo');
+
+let currentFilter = 'all';
+
+function fmt(d){const dt=new Date(d);return dt.toLocaleDateString('en-GB',{day:'numeric',month:'short'});}
+
+function daysUntil(dateStr){
+  const d=new Date(dateStr);
+  const diff=Math.ceil((d-TODAY)/(1000*60*60*24));
+  return diff;
+}
+
+function ownerColor(o){
+  if(o==='ray') return 'ray';
+  if(o==='chase') return 'chase';
+  return 'both';
+}
+function ownerLabel(o){
+  if(o==='ray') return 'Ray';
+  if(o==='chase') return 'Chase';
+  return 'Ray + Chase';
+}
+
+function phaseProgress(p){
+  const s=new Date(p.start), e=new Date(p.end);
+  const total=e-s;
+  const elapsed=TODAY-s;
+  if(elapsed<=0) return 0;
+  if(elapsed>=total) return 100;
+  return Math.round(elapsed/total*100);
+}
+
+function barColor(o){
+  if(o==='ray') return '#534AB7';
+  if(o==='chase') return '#BA7517';
+  return '#1D9E75';
+}
+
+function toggle(id){
+  if(states[id]==='todo') states[id]='wip';
+  else if(states[id]==='wip') states[id]='done';
+  else states[id]='todo';
+  render();
+}
+
+function filter(f, btn){
+  currentFilter=f;
+  document.querySelectorAll('.tog-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function render(){
+  const done=Object.values(states).filter(s=>s==='done').length;
+  const total=phases.length;
+  const pct=Math.round(done/total*100);
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('prog-text').textContent=done+' / '+total+' phases';
+  document.getElementById('pct-done').textContent=pct+'%';
+
+  const dLeft=Math.ceil((LAUNCH-TODAY)/(1000*60*60*24));
+  document.getElementById('days-left').textContent=dLeft>0?dLeft:'Launched!';
+  document.getElementById('weeks-left').textContent=dLeft>0?Math.ceil(dLeft/7):0;
+  document.getElementById('launch-label').textContent='Launch: 25 Jun 2026';
+
+  const strip=document.getElementById('week-strip');
+  strip.innerHTML='';
+  for(let w=1;w<=8;w++){
+    const d=new Date(START);d.setDate(d.getDate()+(w-1)*7);
+    const label='Wk '+w+' · '+d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    const current=w===Math.ceil(Math.max(0,Math.ceil((TODAY-START)/(1000*60*60*24)))/7);
+    const box=document.createElement('div');
+    box.className='week-box'+(current?' active':'');
+    box.textContent=label;
+    strip.appendChild(box);
+  }
+
+  const container=document.getElementById('phases');
+  container.innerHTML='';
+  const filtered=phases.filter(p=>currentFilter==='all'||p.owner===currentFilter);
+  filtered.forEach(p=>{
+    const state=states[p.id];
+    const d=daysUntil(p.end);
+    const el=document.createElement('div');
+    el.className='phase'+(state==='done'?' done':state==='wip'?' wip':'');
+    el.onclick=()=>toggle(p.id);
+    const icon=state==='done'?'✓':state==='wip'?'◐':'';
+    const prog=phaseProgress(p);
+    let daysHtml='';
+    if(state!=='done'){
+      if(d<0) daysHtml=`<span class="days-tag past">${Math.abs(d)}d overdue</span>`;
+      else if(d<=5) daysHtml=`<span class="days-tag soon">Due in ${d}d</span>`;
+      else daysHtml=`<span class="days-tag ok">${d}d left</span>`;
+    }
+    el.innerHTML=`
+      <div class="phase-row">
+        <div class="status-btn">${icon}</div>
+        <div class="phase-info">
+          <div class="phase-name">${p.name}</div>
+          <div class="phase-meta">
+            <span class="date-tag">${fmt(p.start)} → ${fmt(p.end)}</span>
+            <span class="owner-tag ${ownerColor(p.owner)}">${ownerLabel(p.owner)}</span>
+            ${daysHtml}
+          </div>
+        </div>
+      </div>
+      ${state!=='done'?`<div class="phase-bar"><div class="phase-bar-fill" style="width:${prog}%;background:${barColor(p.owner)}"></div></div>`:''}
+    `;
+    container.appendChild(el);
+  });
+}
+
+render();
+</script>
